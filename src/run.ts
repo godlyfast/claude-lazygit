@@ -1,5 +1,5 @@
 import * as p from "@clack/prompts";
-import { getStagedDiff, isGitRepo, commit } from "./git";
+import { getStagedDiff, isGitRepo, commitWithEditor } from "./git";
 import { generateCommitMessage } from "./claude";
 import type { RunOptions } from "./types";
 
@@ -84,14 +84,11 @@ export async function run(options: RunOptions): Promise<void> {
   }
 
   if (options.commit) {
-    const spinner = p.spinner();
-    spinner.start("Committing...");
     try {
-      await commit(message!);
-      spinner.stop("Committed!");
-      p.outro(`Committed: ${message}`);
+      // Open editor with message pre-filled for user to review/edit
+      await commitWithEditor(message!);
+      p.outro("Committed!");
     } catch (error) {
-      spinner.stop("Commit failed");
       console.error(
         "Error:",
         error instanceof Error ? error.message : String(error)

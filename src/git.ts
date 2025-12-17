@@ -14,3 +14,8 @@ export async function isGitRepo(): Promise<boolean> {
 export async function commit(message: string): Promise<void> {
   await git.commit(message);
 }
+
+export async function commitWithEditor(message: string): Promise<void> {
+  // Use -e to open editor, allowing user to edit before committing
+  await git.commit(message, ["-e"]);
+}

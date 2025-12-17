@@ -3,11 +3,21 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
 
+const EDITOR_VAR = "${EDITOR:-vim}";
+
 const LAZYGIT_CUSTOM_COMMAND = `  - key: "<c-a>"
     description: "Generate AI commit message"
     context: "files"
-    command: "claude-lazygit -c"
-    subprocess: true`;
+    command: 'echo "{{ .Form.Msg }}" > .git/COMMIT_EDITMSG && ${EDITOR_VAR} .git/COMMIT_EDITMSG && [ -s .git/COMMIT_EDITMSG ] && git commit -F .git/COMMIT_EDITMSG || echo "Commit aborted."'
+    subprocess: true
+    prompts:
+      - type: "menuFromCommand"
+        title: "AI Commit"
+        key: "Msg"
+        command: "claude-lazygit -p"
+        filter: '^(?P<number>\\d+)\\.\\s(?P<message>.+)$$'
+        valueFormat: "{{ .message }}"
+        labelFormat: "{{ .number }}: {{ .message | green }}"`;
 
 function getLazygitConfigPath(): string {
   const platform = process.platform;
