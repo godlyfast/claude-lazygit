@@ -1,5 +1,5 @@
 import * as p from "@clack/prompts";
-import { getStagedDiff, isGitRepo, commitWithEditor } from "./git";
+import { getStagedDiff, isGitRepo, commitWithEditor, checkEditor } from "./git";
 import { generateCommitMessage } from "./claude";
 import type { RunOptions } from "./types";
 
@@ -7,6 +7,19 @@ export async function run(options: RunOptions): Promise<void> {
   if (!(await isGitRepo())) {
     console.error("Error: Not in a git repository");
     process.exit(1);
+  }
+
+  // Check editor availability early if we'll need it
+  if (options.commit) {
+    const { editor, exists } = checkEditor();
+    if (!exists) {
+      console.error(`Error: Editor '${editor}' not found.`);
+      console.error("Set your preferred editor with one of:");
+      console.error("  git config --global core.editor nano");
+      console.error("  git config --global core.editor vim");
+      console.error("  export EDITOR=nano");
+      process.exit(1);
+    }
   }
 
   const diff = await getStagedDiff();
