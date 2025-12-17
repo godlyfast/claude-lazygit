@@ -19,16 +19,10 @@ function getClaudeLazygitCommand(): string {
 }
 
 const LAZYGIT_CUSTOM_COMMAND = `  - key: "<c-a>"
-    command: 'git commit -m "{{ .Form.Msg }}"'
+    description: "Generate AI commit message"
     context: "files"
-    prompts:
-      - type: "menuFromCommand"
-        title: "AI Commit"
-        key: "Msg"
-        command: "${getClaudeLazygitCommand()} -p"
-        filter: '^(?P<number>\\d+)\\.\\s(?P<message>.+)$$'
-        valueFormat: "{{ .message }}"
-        labelFormat: "{{ .number }}: {{ .message | green }}"`;
+    command: "${getClaudeLazygitCommand()} -c"
+    subprocess: true`;
 
 function getLazygitConfigPath(): string {
   const platform = process.platform;
