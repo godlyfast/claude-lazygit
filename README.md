@@ -1,12 +1,29 @@
 # claude-lazygit
 
+<!--toc:start-->
+
+- [claude-lazygit](#claude-lazygit)
+  - [Features](#features)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+    - [From source](#from-source)
+  - [Usage](#usage)
+    - [Generate commit messages](#generate-commit-messages)
+    - [Setup lazygit integration](#setup-lazygit-integration)
+  - [Manual Lazygit Configuration](#manual-lazygit-configuration)
+  - [How it Works](#how-it-works)
+  - [Commands](#commands)
+  - [Options](#options)
+  - [License](#license)
+  <!--toc:end-->
+
 AI-powered commit message generator using Claude Code CLI. A variant of [bunnai](https://github.com/chhoumann/bunnai) that uses Claude instead of OpenAI.
 
 ## Features
 
 - **Zero config** - Uses Claude Code CLI's existing authentication
-- **Interactive UI** - Beautiful terminal selection interface
-- **Conventional commits** - Generates messages following the conventional commits format
+- **High-quality output** - Generates one focused commit message with option to regenerate
+- **Conventional commits** - Follows the Conventional Commits specification
 - **Lazygit integration** - One-command setup for lazygit custom commands
 
 ## Prerequisites
@@ -36,19 +53,23 @@ npm link
 
 ## Usage
 
-### Generate commit messages
+### Generate commit message
 
 ```bash
 # Stage your changes first
 git add .
 
-# Generate commit messages
+# Generate commit message
 claude-lazygit
 
 # Options
-claude-lazygit -n 10      # Generate 10 suggestions (default: 5)
 claude-lazygit --verbose  # Enable verbose output
 ```
+
+The tool generates one high-quality commit message. You can then:
+- **Accept** - Use the message
+- **Regenerate** - Generate a new message
+- **Cancel** - Exit without committing
 
 ### Setup lazygit integration
 
@@ -78,26 +99,25 @@ customCommands:
 ## How it Works
 
 1. Gets the staged diff using `git diff --cached`
-2. Invokes Claude Code CLI with a structured JSON schema
-3. Parses the response to extract commit message suggestions
-4. Presents an interactive selection menu
-5. Outputs the selected message
+2. Sends diff to Claude Code CLI with optimized prompt for conventional commits
+3. Displays the generated commit message
+4. Allows accept, regenerate, or cancel
+5. Outputs the accepted message to stdout
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `claude-lazygit` | Generate commit messages for staged changes |
-| `claude-lazygit setup` | Configure lazygit integration (interactive) |
-| `claude-lazygit setup -y` | Configure lazygit without confirmation |
-| `claude-lazygit --help` | Show help |
+| Command                   | Description                                 |
+| ------------------------- | ------------------------------------------- |
+| `claude-lazygit`          | Generate commit messages for staged changes |
+| `claude-lazygit setup`    | Configure lazygit integration (interactive) |
+| `claude-lazygit setup -y` | Configure lazygit without confirmation      |
+| `claude-lazygit --help`   | Show help                                   |
 
 ## Options
 
-| Option | Alias | Default | Description |
-|--------|-------|---------|-------------|
-| `--count` | `-n` | 5 | Number of commit suggestions |
-| `--verbose` | `-v` | false | Enable verbose output |
+| Option      | Alias | Default | Description           |
+| ----------- | ----- | ------- | --------------------- |
+| `--verbose` | `-v`  | false   | Enable verbose output |
 
 ## License
 

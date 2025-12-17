@@ -10,3 +10,7 @@ export async function getStagedDiff(): Promise<string> {
 export async function isGitRepo(): Promise<boolean> {
   return git.checkIsRepo();
 }
+
+export async function commit(message: string): Promise<void> {
+  await git.commit(message);
+}

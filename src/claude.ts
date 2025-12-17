@@ -16,7 +16,7 @@ function runCommand(
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
   return new Promise((resolve) => {
     const proc = spawn(command, args, {
-      stdio: ["pipe", "pipe", "pipe"],
+      stdio: ["ignore", "pipe", "pipe"],
     });
 
     let stdout = "";
@@ -49,24 +49,11 @@ function runCommand(
   });
 }
 
-export async function generateCommitMessages(
+export async function generateCommitMessage(
   diff: string,
-  count: number,
   verbose: boolean
-): Promise<ClaudeCommitResponse> {
-  const userPrompt = `Generate ${count} commit message suggestions for this diff:\n\n\`\`\`diff\n${diff}\n\`\`\``;
-
-  const schemaWithCount = {
-    ...JSON_SCHEMA,
-    properties: {
-      ...JSON_SCHEMA.properties,
-      commits: {
-        ...JSON_SCHEMA.properties.commits,
-        minItems: count,
-        maxItems: count,
-      },
-    },
-  };
+): Promise<string> {
+  const userPrompt = `Generate a commit message for this diff:\n\n\`\`\`diff\n${diff}\n\`\`\``;
 
   const args = [
     "-p",
@@ -74,13 +61,13 @@ export async function generateCommitMessages(
     "--output-format",
     "json",
     "--json-schema",
-    JSON.stringify(schemaWithCount),
+    JSON.stringify(JSON_SCHEMA),
     "--system-prompt",
     SYSTEM_PROMPT,
   ];
 
   if (verbose) {
-    console.error("Running: claude", args.slice(0, 3).join(" ").slice(0, 100) + "...");
+    console.error("Running Claude CLI...");
   }
 
   const { stdout, stderr, exitCode } = await runCommand("claude", args);
@@ -99,9 +86,9 @@ export async function generateCommitMessages(
     throw new Error(`Claude CLI error: ${response.result}`);
   }
 
-  if (response.structured_output) {
-    return response.structured_output;
+  if (response.structured_output?.message) {
+    return response.structured_output.message;
   }
 
-  throw new Error("No structured output received from Claude CLI");
+  throw new Error("No commit message received from Claude CLI");
 }

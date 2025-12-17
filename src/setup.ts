@@ -4,10 +4,18 @@ import * as path from "node:path";
 import * as os from "node:os";
 
 const LAZYGIT_CUSTOM_COMMAND = `  - key: "<c-a>"
-    description: "Generate AI commit message"
+    description: "AI commit"
     context: "files"
-    command: "claude-lazygit"
-    subprocess: true`;
+    prompts:
+      - type: "menuFromCommand"
+        title: "AI Commit Message"
+        key: "Msg"
+        command: "claude-lazygit -p"
+        filter: '^(?P<number>\\d+)\\.\\s(?P<message>.+)$$'
+        valueFormat: "{{ .message }}"
+        labelFormat: "{{ .number }}: {{ .message | green }}"
+    command: 'git commit -m "{{ .Form.Msg }}"'
+    loadingText: "Generating AI commit message..."`;
 
 function getLazygitConfigPath(): string {
   const platform = process.platform;
@@ -23,7 +31,6 @@ function getLazygitConfigPath(): string {
   } else if (platform === "win32") {
     return path.join(os.homedir(), "AppData", "Local", "lazygit", "config.yml");
   } else {
-    // Linux and others
     const xdgConfig = process.env.XDG_CONFIG_HOME;
     if (xdgConfig) {
       return path.join(xdgConfig, "lazygit", "config.yml");
@@ -39,8 +46,62 @@ function ensureDirectoryExists(filePath: string): void {
   }
 }
 
-function configContainsClaudeLazygit(content: string): boolean {
-  return content.includes("claude-lazygit");
+function removeClaudeLazygitBlock(content: string): string {
+  const lines = content.split("\n");
+  const result: string[] = [];
+  let inClaudeLazygitBlock = false;
+  let blockStartIndent = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Check if this is start of a new command block
+    if (trimmed.startsWith("- key:")) {
+      // Look ahead to check if this block contains claude-lazygit
+      let containsClaudeLazygit = false;
+      const currentIndent = line.indexOf("-");
+
+      for (let j = i; j < lines.length; j++) {
+        const checkLine = lines[j];
+        const checkTrimmed = checkLine.trim();
+
+        // Stop at next command at same level
+        if (j > i && checkTrimmed.startsWith("- key:") && checkLine.indexOf("-") <= currentIndent) {
+          break;
+        }
+
+        if (checkLine.includes("claude-lazygit")) {
+          containsClaudeLazygit = true;
+          break;
+        }
+      }
+
+      if (containsClaudeLazygit) {
+        inClaudeLazygitBlock = true;
+        blockStartIndent = currentIndent;
+        continue;
+      } else {
+        inClaudeLazygitBlock = false;
+      }
+    }
+
+    // Skip lines in claude-lazygit block
+    if (inClaudeLazygitBlock) {
+      const currentIndent = line.search(/\S/);
+      // Check if we're still in the block (indented deeper or empty line)
+      if (trimmed === "" || currentIndent > blockStartIndent) {
+        continue;
+      }
+      // We've exited the block
+      inClaudeLazygitBlock = false;
+    }
+
+    result.push(line);
+  }
+
+  // Clean up multiple empty lines
+  return result.join("\n").replace(/\n{3,}/g, "\n\n");
 }
 
 export async function setupLazygit(skipConfirm = false): Promise<void> {
@@ -59,30 +120,27 @@ export async function setupLazygit(skipConfirm = false): Promise<void> {
   }
 
   let existingConfig = "";
-  let configExists = false;
+  let hadExistingConfig = false;
 
   if (fs.existsSync(configPath)) {
-    configExists = true;
     existingConfig = fs.readFileSync(configPath, "utf-8");
+    hadExistingConfig = existingConfig.includes("claude-lazygit");
 
-    if (configContainsClaudeLazygit(existingConfig)) {
-      if (isTTY) {
-        p.log.success("claude-lazygit is already configured in lazygit!");
-        p.outro("Setup complete");
-      } else {
-        console.log("claude-lazygit is already configured in lazygit!");
-      }
-      return;
+    // Remove old claude-lazygit config
+    if (hadExistingConfig) {
+      existingConfig = removeClaudeLazygitBlock(existingConfig);
     }
   }
 
   // Skip confirmation if --yes flag or non-TTY
   if (!skipConfirm && isTTY) {
-    const shouldContinue = await p.confirm({
-      message: configExists
-        ? "Add claude-lazygit custom command to existing lazygit config?"
-        : "Create lazygit config with claude-lazygit custom command?",
-    });
+    const message = hadExistingConfig
+      ? "Update claude-lazygit config?"
+      : existingConfig
+        ? "Add claude-lazygit to lazygit config?"
+        : "Create lazygit config?";
+
+    const shouldContinue = await p.confirm({ message });
 
     if (p.isCancel(shouldContinue) || !shouldContinue) {
       p.cancel("Setup cancelled");
@@ -92,18 +150,15 @@ export async function setupLazygit(skipConfirm = false): Promise<void> {
 
   let newConfig: string;
 
-  if (configExists && existingConfig.trim()) {
-    // Check if customCommands section exists
-    if (existingConfig.includes("customCommands:")) {
-      // Append to existing customCommands
-      newConfig = existingConfig.replace(
-        /customCommands:\s*\n/,
-        `customCommands:\n${LAZYGIT_CUSTOM_COMMAND}\n`
-      );
-    } else {
-      // Add customCommands section
-      newConfig = existingConfig.trimEnd() + `\n\ncustomCommands:\n${LAZYGIT_CUSTOM_COMMAND}\n`;
-    }
+  if (existingConfig.includes("customCommands:")) {
+    // Insert after customCommands:
+    newConfig = existingConfig.replace(
+      /customCommands:(\s*\n)?/,
+      `customCommands:\n${LAZYGIT_CUSTOM_COMMAND}\n`
+    );
+  } else if (existingConfig.trim()) {
+    // Add customCommands section at end
+    newConfig = existingConfig.trimEnd() + `\n\ncustomCommands:\n${LAZYGIT_CUSTOM_COMMAND}\n`;
   } else {
     // Create new config
     newConfig = `customCommands:\n${LAZYGIT_CUSTOM_COMMAND}\n`;
@@ -112,13 +167,15 @@ export async function setupLazygit(skipConfirm = false): Promise<void> {
   ensureDirectoryExists(configPath);
   fs.writeFileSync(configPath, newConfig, "utf-8");
 
+  const action = hadExistingConfig ? "updated" : "added";
+
   if (isTTY) {
-    p.log.success("Lazygit configuration updated!");
-    p.log.info("Custom command added: Ctrl+A to generate AI commit messages");
-    p.outro("Setup complete - restart lazygit to use the new command");
+    p.log.success(`Lazygit configuration ${action}!`);
+    p.log.info("Press Ctrl+A in lazygit to generate AI commit messages");
+    p.outro("Restart lazygit to apply changes");
   } else {
-    console.log("Lazygit configuration updated!");
-    console.log("Custom command added: Ctrl+A to generate AI commit messages");
-    console.log("Restart lazygit to use the new command");
+    console.log(`Lazygit configuration ${action}!`);
+    console.log("Press Ctrl+A in lazygit to generate AI commit messages");
+    console.log("Restart lazygit to apply changes");
   }
 }

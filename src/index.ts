@@ -13,26 +13,32 @@ if (args[0] === "setup") {
     name: "claude-lazygit",
     version: "1.0.0",
     flags: {
-      count: {
-        type: Number,
-        description: "Number of commit suggestions to generate",
-        default: 5,
-        alias: "n",
-      },
       verbose: {
         type: Boolean,
         description: "Enable verbose output",
         default: false,
         alias: "v",
       },
+      commit: {
+        type: Boolean,
+        description: "Commit directly after accepting message",
+        default: false,
+        alias: "c",
+      },
+      print: {
+        type: Boolean,
+        description: "Print message only (no UI, for lazygit integration)",
+        default: false,
+        alias: "p",
+      },
     },
     help: {
       description: "AI-powered commit message generator using Claude Code CLI",
       examples: [
-        "claude-lazygit             # Generate commit messages",
-        "claude-lazygit -n 10       # Generate 10 suggestions",
+        "claude-lazygit             # Interactive mode",
+        "claude-lazygit -c          # Generate and commit directly",
+        "claude-lazygit -p          # Print message only (for lazygit)",
         "claude-lazygit setup       # Setup lazygit integration",
-        "claude-lazygit setup -y    # Setup without confirmation",
       ],
     },
   });
@@ -48,7 +54,8 @@ if (args[0] === "setup") {
   });
 
   run({
-    count: argv.flags.count,
     verbose: argv.flags.verbose,
+    commit: argv.flags.commit,
+    print: argv.flags.print,
   });
 }
