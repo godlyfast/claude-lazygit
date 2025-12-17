@@ -9,7 +9,7 @@
     - [From source](#from-source)
   - [Usage](#usage)
     - [Generate commit messages](#generate-commit-messages)
-    - [Setup lazygit integration](#setup-lazygit-integration)
+    - [Install lazygit integration](#install-lazygit-integration)
   - [Manual Lazygit Configuration](#manual-lazygit-configuration)
   - [How it Works](#how-it-works)
   - [Commands](#commands)
@@ -24,7 +24,7 @@ AI-powered commit message generator using Claude Code CLI. A variant of [bunnai]
 - **Zero config** - Uses Claude Code CLI's existing authentication
 - **High-quality output** - Generates one focused commit message with option to regenerate
 - **Conventional commits** - Follows the Conventional Commits specification
-- **Lazygit integration** - One-command setup for lazygit custom commands
+- **Lazygit integration** - One-command install for lazygit custom commands
 
 ## Prerequisites
 
@@ -71,14 +71,14 @@ The tool generates one high-quality commit message. You can then:
 - **Regenerate** - Generate a new message
 - **Cancel** - Exit without committing
 
-### Setup lazygit integration
+### Install lazygit integration
 
 ```bash
 # Automatically configure lazygit (interactive)
-claude-lazygit setup
+claude-lazygit install
 
 # Skip confirmation prompt
-claude-lazygit setup -y
+claude-lazygit install -y
 ```
 
 This adds a custom command to lazygit. Press `Ctrl+A` in the files panel to generate AI commit messages.
@@ -106,12 +106,14 @@ customCommands:
 
 ## Commands
 
-| Command                   | Description                                 |
-| ------------------------- | ------------------------------------------- |
-| `claude-lazygit`          | Generate commit messages for staged changes |
-| `claude-lazygit setup`    | Configure lazygit integration (interactive) |
-| `claude-lazygit setup -y` | Configure lazygit without confirmation      |
-| `claude-lazygit --help`   | Show help                                   |
+| Command                       | Description                                 |
+| ----------------------------- | ------------------------------------------- |
+| `claude-lazygit`              | Generate commit messages for staged changes |
+| `claude-lazygit install`      | Install lazygit integration (interactive)   |
+| `claude-lazygit install -y`   | Install lazygit integration without confirm |
+| `claude-lazygit uninstall`    | Remove lazygit integration (interactive)    |
+| `claude-lazygit uninstall -y` | Remove lazygit integration without confirm  |
+| `claude-lazygit --help`       | Show help                                   |
 
 ## Options
 

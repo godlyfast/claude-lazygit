@@ -96,11 +96,11 @@ function removeClaudeLazygitBlock(content: string): string {
   return result.join("\n").replace(/\n{3,}/g, "\n\n");
 }
 
-export async function setupLazygit(skipConfirm = false): Promise<void> {
+export async function installLazygit(skipConfirm = false): Promise<void> {
   const isTTY = process.stdout.isTTY;
 
   if (isTTY) {
-    p.intro("claude-lazygit setup");
+    p.intro("claude-lazygit install");
   }
 
   const configPath = getLazygitConfigPath();
@@ -190,6 +190,93 @@ export async function setupLazygit(skipConfirm = false): Promise<void> {
   } else {
     console.log(`Lazygit configuration ${action}!`);
     console.log("Press Ctrl+A in lazygit to generate AI commit messages");
+    console.log("Restart lazygit to apply changes");
+  }
+}
+
+export async function uninstallLazygit(skipConfirm = false): Promise<void> {
+  const isTTY = process.stdout.isTTY;
+
+  if (isTTY) {
+    p.intro("claude-lazygit uninstall");
+  }
+
+  const configPath = getLazygitConfigPath();
+
+  if (!fs.existsSync(configPath)) {
+    const msg = "Lazygit config not found. Nothing to uninstall.";
+    if (isTTY) {
+      p.log.warn(msg);
+      p.outro("Done");
+    } else {
+      console.log(msg);
+    }
+    return;
+  }
+
+  let existingConfig: string;
+  try {
+    existingConfig = fs.readFileSync(configPath, "utf-8");
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const errorMsg = `Failed to read config file: ${message}`;
+    if (isTTY) {
+      p.log.error(errorMsg);
+    } else {
+      console.error(errorMsg);
+    }
+    process.exit(1);
+  }
+
+  if (!existingConfig.includes("claude-lazygit")) {
+    const msg = "claude-lazygit not found in lazygit config. Nothing to remove.";
+    if (isTTY) {
+      p.log.warn(msg);
+      p.outro("Done");
+    } else {
+      console.log(msg);
+    }
+    return;
+  }
+
+  if (isTTY) {
+    p.log.info(`Lazygit config path: ${configPath}`);
+  } else {
+    console.log(`Lazygit config path: ${configPath}`);
+  }
+
+  // Skip confirmation if --yes flag or non-TTY
+  if (!skipConfirm && isTTY) {
+    const shouldContinue = await p.confirm({
+      message: "Remove claude-lazygit from lazygit config?",
+    });
+
+    if (p.isCancel(shouldContinue) || !shouldContinue) {
+      p.cancel("Uninstall cancelled");
+      process.exit(0);
+    }
+  }
+
+  const newConfig = removeClaudeLazygitBlock(existingConfig);
+
+  try {
+    fs.writeFileSync(configPath, newConfig, "utf-8");
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const errorMsg = `Failed to write config file: ${message}`;
+    if (isTTY) {
+      p.log.error(errorMsg);
+    } else {
+      console.error(errorMsg);
+    }
+    process.exit(1);
+  }
+
+  if (isTTY) {
+    p.log.success("claude-lazygit removed from lazygit config!");
+    p.outro("Restart lazygit to apply changes");
+  } else {
+    console.log("claude-lazygit removed from lazygit config!");
     console.log("Restart lazygit to apply changes");
   }
 }

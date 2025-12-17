@@ -1,17 +1,20 @@
 #!/usr/bin/env node
 import { cli } from "cleye";
 import { run } from "./run";
-import { setupLazygit } from "./setup";
+import { installLazygit, uninstallLazygit } from "./setup";
 
-// Check for setup subcommand before parsing with cleye
+// Check for subcommands before parsing with cleye
 const args = process.argv.slice(2);
-if (args[0] === "setup") {
+if (args[0] === "install") {
   const skipConfirm = args.includes("-y") || args.includes("--yes");
-  setupLazygit(skipConfirm);
+  installLazygit(skipConfirm);
+} else if (args[0] === "uninstall") {
+  const skipConfirm = args.includes("-y") || args.includes("--yes");
+  uninstallLazygit(skipConfirm);
 } else {
   const argv = cli({
     name: "claude-lazygit",
-    version: "1.0.0",
+    version: "1.1.0",
     flags: {
       verbose: {
         type: Boolean,
@@ -38,7 +41,8 @@ if (args[0] === "setup") {
         "claude-lazygit             # Interactive mode",
         "claude-lazygit -c          # Generate and commit directly",
         "claude-lazygit -p          # Print message only (for lazygit)",
-        "claude-lazygit setup       # Setup lazygit integration",
+        "claude-lazygit install     # Install lazygit integration",
+        "claude-lazygit uninstall   # Remove lazygit integration",
       ],
     },
   });
