@@ -44,7 +44,7 @@ bun install -g claude-lazygit
 ### From source
 
 ```bash
-git clone https://github.com/yourusername/claude-lazygit.git
+git clone https://github.com/godlyfast/claude-lazygit.git
 cd claude-lazygit
 bun install
 bun run build

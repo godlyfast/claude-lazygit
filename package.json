@@ -37,8 +37,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/claude-lazygit"
+    "url": "https://github.com/godlyfast/claude-lazygit"
   },
-  "author": "",
+  "homepage": "https://github.com/godlyfast/claude-lazygit#readme",
+  "bugs": {
+    "url": "https://github.com/godlyfast/claude-lazygit/issues"
+  },
+  "author": "Tim Smyr <godlyfast@gmail.com>",
   "license": "MIT"
 }

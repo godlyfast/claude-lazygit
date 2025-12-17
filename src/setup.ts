@@ -115,7 +115,18 @@ export async function setupLazygit(skipConfirm = false): Promise<void> {
   let hadExistingConfig = false;
 
   if (fs.existsSync(configPath)) {
-    existingConfig = fs.readFileSync(configPath, "utf-8");
+    try {
+      existingConfig = fs.readFileSync(configPath, "utf-8");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      const errorMsg = `Failed to read config file: ${message}`;
+      if (isTTY) {
+        p.log.error(errorMsg);
+      } else {
+        console.error(errorMsg);
+      }
+      process.exit(1);
+    }
     hadExistingConfig = existingConfig.includes("claude-lazygit");
 
     // Remove old claude-lazygit config
@@ -156,8 +167,19 @@ export async function setupLazygit(skipConfirm = false): Promise<void> {
     newConfig = `customCommands:\n${LAZYGIT_CUSTOM_COMMAND}\n`;
   }
 
-  ensureDirectoryExists(configPath);
-  fs.writeFileSync(configPath, newConfig, "utf-8");
+  try {
+    ensureDirectoryExists(configPath);
+    fs.writeFileSync(configPath, newConfig, "utf-8");
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const errorMsg = `Failed to write config file: ${message}`;
+    if (isTTY) {
+      p.log.error(errorMsg);
+    } else {
+      console.error(errorMsg);
+    }
+    process.exit(1);
+  }
 
   const action = hadExistingConfig ? "updated" : "added";
 
