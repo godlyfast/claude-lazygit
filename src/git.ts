@@ -16,6 +16,13 @@ export async function commit(message: string): Promise<void> {
 }
 
 export async function commitWithEditor(message: string): Promise<void> {
+  const { spawnSync } = await import("node:child_process");
   // Use -e to open editor, allowing user to edit before committing
-  await git.commit(message, ["-e"]);
+  // Spawn directly to inherit TTY for proper editor interaction
+  const result = spawnSync("git", ["commit", "-e", "-m", message], {
+    stdio: "inherit",
+  });
+  if (result.status !== 0) {
+    throw new Error(`git commit failed with exit code ${result.status}`);
+  }
 }
