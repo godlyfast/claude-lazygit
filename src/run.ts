@@ -22,11 +22,13 @@ export async function run(options: RunOptions): Promise<void> {
     console.error(`Diff length: ${diff.length} characters`);
   }
 
-  // Print mode: just output the message and exit (for lazygit integration)
+  // Print mode: output numbered message for lazygit menuFromCommand
   if (options.print) {
     try {
       const message = await generateCommitMessage(diff, options.verbose);
-      console.log(message);
+      // Output only the first line (subject) in numbered format for lazygit
+      const subject = message.split("\n")[0];
+      console.log(`1. ${subject}`);
     } catch (error) {
       console.error(
         "Error:",
