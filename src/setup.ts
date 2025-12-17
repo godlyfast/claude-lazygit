@@ -3,25 +3,10 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
 
-function getClaudeLazygitCommand(): string {
-  // Use full path to avoid PATH issues in lazygit
-  const homedir = os.homedir();
-  const bunPath = path.join(homedir, ".bun", "bin", "claude-lazygit");
-  const npmPath = path.join(homedir, ".npm-global", "bin", "claude-lazygit");
-
-  if (fs.existsSync(bunPath)) {
-    return bunPath;
-  } else if (fs.existsSync(npmPath)) {
-    return npmPath;
-  }
-  // Fallback to command name (relies on PATH)
-  return "claude-lazygit";
-}
-
 const LAZYGIT_CUSTOM_COMMAND = `  - key: "<c-a>"
     description: "Generate AI commit message"
     context: "files"
-    command: "${getClaudeLazygitCommand()} -c"
+    command: "claude-lazygit -c"
     subprocess: true`;
 
 function getLazygitConfigPath(): string {
