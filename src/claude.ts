@@ -12,7 +12,7 @@ interface ClaudeCliResponse {
 
 function runCommand(
   command: string,
-  args: string[]
+  args: string[],
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
   return new Promise((resolve) => {
     const proc = spawn(command, args, {
@@ -51,7 +51,7 @@ function runCommand(
 
 export async function generateCommitMessage(
   diff: string,
-  verbose: boolean
+  verbose: boolean,
 ): Promise<string> {
   const userPrompt = `Generate a commit message for this diff:\n\n\`\`\`diff\n${diff}\n\`\`\``;
 
